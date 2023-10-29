@@ -77,7 +77,8 @@ namespace as::cryptox::mexc {
 		{
 		}
 
-		ApiResponseSettingsCommonSymbols apiReqSettingsCommonSymbols();
+		ApiResponseExchangeInfo apiReqExchangeInfo();
+		ApiResponseUserDataStream apiReqUserDataStream();
 
 		void run(
 			const t_exchangeClientReadyHandler & handler,

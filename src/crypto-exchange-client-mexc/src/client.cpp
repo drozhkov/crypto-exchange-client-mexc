@@ -43,6 +43,19 @@ namespace as::cryptox::mexc {
 	void Client::addAuthHeaders(
 		HttpHeaderList & headers, ::as::t_string & body )
 	{
+
+		auto ts = UnixTs<std::chrono::milliseconds>();
+
+		body.append( ( body.empty() ? AS_T( "" ) : AS_T( "&" ) ) +
+			as::t_string( AS_T( "timestamp=" ) ) + AS_TOSTRING( ts ) );
+
+		auto sign = hmacSha256( m_apiSecret, body );
+		auto signHex =
+			toHexLowerCase( as::t_buffer( sign.data(), sign.size() ) );
+
+		headers.add( AS_T( "X-MEXC-APIKEY" ), m_apiKey );
+
+		body.append( AS_T( "&signature=" ) + signHex );
 	}
 
 	void Client::wsErrorHandler(
@@ -106,7 +119,7 @@ namespace as::cryptox::mexc {
 
 		as::cryptox::Client::initSymbolMap();
 
-		auto apiRes = apiReqSettingsCommonSymbols();
+		auto apiRes = apiReqExchangeInfo();
 		m_pairList.resize( apiRes.Pairs().size() + 2 );
 		m_pairList[0] = as::cryptox::Pair( as::cryptox::Coin::_undef,
 			as::cryptox::Coin::_undef,
@@ -138,14 +151,28 @@ namespace as::cryptox::mexc {
 		as::cryptox::Client::initWsClient( index );
 	}
 
-	ApiResponseSettingsCommonSymbols Client::apiReqSettingsCommonSymbols()
+	ApiResponseExchangeInfo Client::apiReqExchangeInfo()
 	{
-		auto url = m_httpApiUrls[HttpClientApiIndex].add(
-			ApiRequest::SettingsCommonSymbols() );
+		auto url =
+			m_httpApiUrls[HttpClientApiIndex].add( ApiRequest::ExchangeInfo() );
 
 		auto res = m_httpClient.get( url, HttpHeaderList() );
 
-		return ApiResponseSettingsCommonSymbols::deserialize( res );
+		return ApiResponseExchangeInfo::deserialize( res );
+	}
+
+	ApiResponseUserDataStream Client::apiReqUserDataStream()
+	{
+		auto url = m_httpApiUrls[HttpClientApiIndex].add(
+			ApiRequest::UserDataStream() );
+
+		HttpHeaderList headers;
+		as::t_string body;
+		addAuthHeaders( headers, body );
+
+		auto res = m_httpClient.post( url, headers, body );
+
+		return ApiResponseUserDataStream::deserialize( res );
 	}
 
 	bool Client::subscribe( size_t index, const as::t_string & topicName )
@@ -164,6 +191,10 @@ namespace as::cryptox::mexc {
 	void Client::run( const t_exchangeClientReadyHandler & handler,
 		const std::function<void( size_t )> & beforeRun )
 	{
+
+		auto resUserDataStream = apiReqUserDataStream();
+		m_wsApiUrls[WsClientApiIndex] = m_wsApiUrls[WsClientApiIndex].add(
+			AS_T( "?listenKey=" ) + resUserDataStream.ListenKey() );
 
 		as::cryptox::Client::run( handler );
 	}
@@ -192,6 +223,16 @@ namespace as::cryptox::mexc {
 	void Client::subscribeOrderUpdate(
 		size_t wsClientIndex, const t_orderUpdateHandler & handler )
 	{
+
+		// auto url = m_httpApiUrls[HttpClientApiIndex].add(
+		//	ApiRequest::UserDataStream() );
+
+		// HttpHeaderList headers;
+		// as::t_string body;
+		// addAuthHeaders( headers, body );
+
+		// auto res = m_httpClient.post( url, headers, body );
+		// AS_LOG_TRACE_LINE( res );
 
 		as::cryptox::Client::subscribeOrderUpdate( wsClientIndex, handler );
 	}

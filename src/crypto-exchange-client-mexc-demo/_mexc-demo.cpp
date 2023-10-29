@@ -19,12 +19,12 @@ int main()
 			.run( []( as::cryptox::Client & c, size_t wsClientIndex ) {
 				std::cout << "ready: " << wsClientIndex << std::endl;
 
-				// c.subscribeOrderUpdate( wsClientIndex,
-				//	[]( as::cryptox::Client & c,
-				//		size_t,
-				//		as::cryptox::t_order_update & u ) {
-				//		std::cout << "order update: " << u.orderId << std::endl;
-				//	} );
+				c.subscribeOrderUpdate( wsClientIndex,
+					[]( as::cryptox::Client & c,
+						size_t,
+						as::cryptox::t_order_update & u ) {
+						std::cout << "order update: " << u.orderId << std::endl;
+					} );
 
 				auto symbol = c.toSymbol(
 					as::cryptox::Coin::BTC, as::cryptox::Coin::USDT );

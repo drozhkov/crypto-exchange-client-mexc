@@ -43,9 +43,14 @@ namespace as::cryptox::mexc {
 
 	class ApiRequest : public ApiMessage {
 	public:
-		static as::t_stringview SettingsCommonSymbols()
+		static as::t_stringview ExchangeInfo()
 		{
 			return AS_T( "/api/v3/exchangeInfo" );
+		}
+
+		static as::t_stringview UserDataStream()
+		{
+			return AS_T( "/api/v3/userDataStream" );
 		}
 
 		static as::t_string Buy( const as::t_stringview & symbolName,
@@ -69,7 +74,7 @@ namespace as::cryptox::mexc {
 		}
 	};
 
-	class ApiResponseSettingsCommonSymbols : public ApiMessage {
+	class ApiResponseExchangeInfo : public ApiMessage {
 	public:
 		struct Pair {
 			as::t_string name;
@@ -81,14 +86,13 @@ namespace as::cryptox::mexc {
 		std::vector<Pair> m_pairs;
 
 	public:
-		static ApiResponseSettingsCommonSymbols deserialize(
-			const ::as::t_string & s )
+		static ApiResponseExchangeInfo deserialize( const ::as::t_string & s )
 		{
 
 			auto v = boost::json::parse( s );
 			auto & o = v.get_object();
 
-			ApiResponseSettingsCommonSymbols result;
+			ApiResponseExchangeInfo result;
 
 			for ( const auto & e : o["symbols"].get_array() ) {
 				auto & s = e.get_object();
@@ -114,6 +118,29 @@ namespace as::cryptox::mexc {
 		}
 	};
 
+	class ApiResponseUserDataStream : public ApiMessage {
+	protected:
+		as::t_string m_listenKey;
+
+	public:
+		static ApiResponseUserDataStream deserialize( const ::as::t_string & s )
+		{
+			auto v = boost::json::parse( s );
+			auto & o = v.get_object();
+
+			ApiResponseUserDataStream result;
+
+			result.m_listenKey.assign( o["listenKey"].get_string() );
+
+			return result;
+		}
+
+		const as::t_string & ListenKey() const
+		{
+			return m_listenKey;
+		}
+	};
+
 	class ApiResponseOrders : public ApiMessage {
 	protected:
 		::as::t_string m_orderId;
@@ -121,17 +148,7 @@ namespace as::cryptox::mexc {
 	public:
 		static ApiResponseOrders deserialize( const ::as::t_string & s )
 		{
-			auto v = boost::json::parse( s );
-			auto & o = v.get_object();
-
-			if ( o.contains( "error" ) ) {
-				throw ::as::Exception( AS_T( "ApiResponseOrders" ) );
-			}
-
 			ApiResponseOrders result;
-
-			result.m_orderId.assign( o["orderNumber"].get_string() );
-
 			return result;
 		}
 
