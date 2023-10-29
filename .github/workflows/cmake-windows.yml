@@ -1,6 +1,6 @@
 # This starter workflow is for a CMake project running on multiple platforms. There is a different starter workflow if you just want a single platform.
 # See: https://github.com/actions/starter-workflows/blob/main/ci/cmake-single-platform.yml
-name: CMake on multiple platforms
+name: CMake on Windows
 
 on:
   push:
@@ -30,19 +30,11 @@ jobs:
           - os: windows-latest
             c_compiler: cl
             cpp_compiler: cl
-          - os: ubuntu-latest
-            c_compiler: gcc
-            cpp_compiler: g++
-          - os: ubuntu-latest
-            c_compiler: clang
-            cpp_compiler: clang++
         exclude:
           - os: windows-latest
             c_compiler: gcc
           - os: windows-latest
             c_compiler: clang
-          - os: ubuntu-latest
-            c_compiler: cl
 
     steps:
     - uses: actions/checkout@v3
